@@ -1,0 +1,989 @@
+<!DOCTYPE html>
+<html lang="fr" class="dark scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>JOKEBOX — Le Jukebox Digital de la Nuit Abidjanaise (Aperçu Live)</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Instrument+Serif:ital@0;1&family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,700;1,400&family=Poppins:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            night: {
+              DEFAULT: '#0F0B1A',
+              deep: '#08050E',
+              card: '#181226',
+              cardLight: '#221A36',
+              border: 'rgba(255, 255, 255, 0.08)',
+            },
+            neon: {
+              orange: '#FF7A1A',
+              pink: '#FF2E88',
+              green: '#2BE38B',
+            },
+            cream: {
+              DEFAULT: '#F5F1E8',
+              muted: '#9E97AA',
+            }
+          },
+          fontFamily: {
+            display: ['"Bebas Neue"', 'sans-serif'],
+            dramatic: ['"Instrument Serif"', '"Playfair Display"', 'serif'],
+            sans: ['"Poppins"', 'sans-serif'],
+            mono: ['"JetBrains Mono"', 'monospace'],
+          },
+          boxShadow: {
+            'neon-orange': '0 0 30px rgba(255, 122, 26, 0.4)',
+            'neon-pink': '0 0 30px rgba(255, 46, 136, 0.4)',
+            'neon-green': '0 0 30px rgba(43, 227, 139, 0.4)',
+            'card-elevated': '0 25px 60px -15px rgba(0, 0, 0, 0.7)',
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- GSAP & ScrollTrigger CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+
+  <!-- Lucide Icons CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <style>
+    /* Global Noise Filter */
+    .noise-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      pointer-events: none;
+      z-index: 9999;
+      opacity: 0.05;
+      background-repeat: repeat;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+    }
+
+    .wax-texture {
+      background-image: radial-gradient(rgba(255, 122, 26, 0.04) 1px, transparent 0), radial-gradient(rgba(255, 46, 136, 0.04) 1px, transparent 0);
+      background-size: 32px 32px;
+      background-position: 0 0, 16px 16px;
+    }
+
+    .btn-magnetic {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      border-radius: 9999px;
+      transition: transform 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94), box-shadow 0.35s ease;
+      will-change: transform;
+    }
+    .btn-magnetic:hover {
+      transform: scale(1.03);
+    }
+    .btn-magnetic:active {
+      transform: scale(0.98);
+    }
+    .btn-magnetic .btn-slide-bg {
+      position: absolute;
+      inset: 0;
+      transform: translateY(100%);
+      transition: transform 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+      z-index: 1;
+    }
+    .btn-magnetic:hover .btn-slide-bg {
+      transform: translateY(0%);
+    }
+    .btn-magnetic .btn-content {
+      position: relative;
+      z-index: 2;
+    }
+
+    .interactive-lift {
+      transition: transform 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    }
+    .interactive-lift:hover {
+      transform: translateY(-2px);
+    }
+  </style>
+</head>
+<body class="bg-[#0F0B1A] text-[#F5F1E8] font-sans antialiased wax-texture overflow-x-hidden selection:bg-[#FF7A1A] selection:text-black">
+  <div class="noise-overlay"></div>
+
+  <!-- NAVBAR -->
+  <header class="fixed top-5 left-0 right-0 z-50 flex justify-center px-4 pointer-events-none">
+    <nav id="navbar" class="pointer-events-auto transition-all duration-500 rounded-full px-5 py-3 md:px-7 md:py-3.5 flex items-center justify-between gap-6 md:gap-10 bg-white/5 backdrop-blur-md border border-white/10">
+      <a href="#" class="flex items-center gap-2.5">
+        <div class="w-8 h-8 rounded-full bg-gradient-to-tr from-[#FF7A1A] to-[#FF2E88] flex items-center justify-center shadow-[0_0_15px_rgba(255,122,26,0.6)]">
+          <i data-lucide="radio" class="w-4 h-4 text-black"></i>
+        </div>
+        <div class="flex items-baseline gap-1">
+          <span class="font-display text-2xl md:text-3xl tracking-wider text-white">JOKEBOX</span>
+          <span class="w-2 h-2 rounded-full bg-[#2BE38B] animate-pulse"></span>
+        </div>
+      </a>
+
+      <div class="hidden md:flex items-center gap-7 text-sm font-medium text-[#F5F1E8]/75">
+        <a href="#features-section" class="interactive-lift hover:text-white transition-colors">Fonctionnalités</a>
+        <a href="#manifesto-section" class="interactive-lift hover:text-white transition-colors">Expérience Live</a>
+        <a href="#protocol-section" class="interactive-lift hover:text-white transition-colors">Protocole 3 Étapes</a>
+        <a href="#pricing-section" class="interactive-lift hover:text-white transition-colors">Offres Lieux</a>
+      </div>
+
+      <div>
+        <button onclick="openDemoModal()" class="btn-magnetic px-4 py-2 text-xs md:text-sm font-semibold text-black bg-[#FF7A1A] shadow-[0_0_20px_rgba(255,122,26,0.5)]">
+          <span class="btn-slide-bg bg-white"></span>
+          <span class="btn-content flex items-center gap-1.5">
+            <i data-lucide="qr-code" class="w-3.5 h-3.5"></i>
+            <span>Tester Démo</span>
+          </span>
+        </button>
+      </div>
+    </nav>
+  </header>
+
+  <!-- HERO SECTION -->
+  <section class="relative min-h-[100dvh] w-full flex flex-col justify-end overflow-hidden pb-16 pt-32 px-5 sm:px-10 md:px-16 lg:px-24">
+    <div class="absolute inset-0 z-0">
+      <img src="https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?auto=format&fit=crop&w=1920&q=80" alt="Ambiance club et maquis" class="w-full h-full object-cover object-center scale-105 filter brightness-90 contrast-110">
+      <div class="absolute inset-0 bg-gradient-to-t from-[#0F0B1A] via-[#0F0B1A]/85 to-[#0F0B1A]/35"></div>
+      <div class="absolute top-1/4 left-1/4 w-96 h-96 rounded-full bg-[#FF7A1A]/15 blur-[120px] pointer-events-none"></div>
+      <div class="absolute bottom-1/3 right-1/4 w-96 h-96 rounded-full bg-[#FF2E88]/15 blur-[130px] pointer-events-none"></div>
+    </div>
+
+    <div class="relative z-10 max-w-5xl">
+      <div class="hero-anim inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-[#181226]/90 border border-[#FF7A1A]/30 mb-6 backdrop-blur-md shadow-[0_0_15px_rgba(255,122,26,0.2)]">
+        <span class="w-2 h-2 rounded-full bg-[#2BE38B] animate-pulse"></span>
+        <span class="font-mono text-xs uppercase tracking-widest text-[#FF7A1A] font-semibold">
+          Abidjan Nightlife • Wave • Orange Money • MTN
+        </span>
+      </div>
+
+      <h1 class="hero-anim font-display tracking-tight text-white uppercase text-4xl sm:text-6xl md:text-7xl lg:text-8xl leading-[0.92] mb-4">
+        JOKEBOX TRANSFORME CHAQUE SON EN
+        <span class="block font-dramatic italic font-normal text-transparent bg-clip-text bg-gradient-to-r from-[#FF7A1A] via-[#FF2E88] to-[#2BE38B] capitalize text-5xl sm:text-7xl md:text-8xl lg:text-9xl mt-2 drop-shadow-[0_10px_30px_rgba(255,122,26,0.3)]">
+          Ambiance & Revenu.
+        </span>
+      </h1>
+
+      <p class="hero-anim text-base sm:text-lg md:text-xl text-[#F5F1E8]/85 max-w-2xl font-normal leading-relaxed mb-8">
+        Vos clients demandent déjà des musiques au DJ. Avec JOKEBOX, chaque requête flashée au QR code sur la table génère du cash direct pour votre maquis, projette leur dédicace en grand écran et fait monter la température de la salle.
+      </p>
+
+      <div class="hero-anim flex flex-wrap items-center gap-4 sm:gap-6">
+        <a href="#pricing-section" class="btn-magnetic px-7 py-4 text-base font-bold text-black bg-[#FF7A1A] shadow-[0_0_30px_rgba(255,122,26,0.6)]">
+          <span class="btn-slide-bg bg-white"></span>
+          <span class="btn-content flex items-center gap-2.5">
+            <span>Équiper mon établissement</span>
+            <i data-lucide="arrow-right" class="w-4 h-4"></i>
+          </span>
+        </a>
+
+        <button onclick="openDemoModal()" class="btn-magnetic px-6 py-4 text-base font-semibold text-white bg-[#181226]/80 border border-white/20 hover:border-[#FF2E88]/60 backdrop-blur-md shadow-[0_0_20px_rgba(0,0,0,0.5)]">
+          <span class="btn-slide-bg bg-[#FF2E88]/20"></span>
+          <span class="btn-content flex items-center gap-2 text-[#F5F1E8]">
+            <i data-lucide="smartphone" class="w-4 h-4 text-[#FF2E88]"></i>
+            <span>Tester le flux client live</span>
+          </span>
+        </button>
+      </div>
+
+      <div class="hero-anim mt-12 pt-8 border-t border-white/10 grid grid-cols-2 sm:grid-cols-3 gap-6 max-w-2xl">
+        <div>
+          <div class="font-display text-3xl text-white tracking-wide">+142 000 FCFA</div>
+          <div class="text-xs text-[#9E97AA]">Moyenne générée par soirée</div>
+        </div>
+        <div>
+          <div class="font-display text-3xl text-[#2BE38B] tracking-wide">5 Secondes</div>
+          <div class="text-xs text-[#9E97AA]">Validation Wave / OM / MTN</div>
+        </div>
+        <div class="col-span-2 sm:col-span-1">
+          <div class="font-display text-3xl text-[#FF2E88] tracking-wide">0 Litige</div>
+          <div class="text-xs text-[#9E97AA]">Remboursement DJ automatique</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FEATURES SECTION -->
+  <section id="features-section" class="py-24 px-5 sm:px-10 md:px-16 lg:px-24 max-w-7xl mx-auto">
+    <div class="mb-16">
+      <div class="inline-flex items-center gap-2 font-mono text-xs uppercase text-[#FF7A1A] tracking-widest font-semibold mb-3">
+        <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+        <span>Architecture Technologique Dédiée</span>
+      </div>
+      <h2 class="font-display text-4xl sm:text-5xl md:text-6xl text-white tracking-tight uppercase">
+        3 Artefacts Conçus pour la Ferveur & la Rentabilité
+      </h2>
+      <p class="text-[#9E97AA] text-base md:text-lg max-w-2xl mt-3">
+        Plus qu'un simple lecteur : un système complet reliant les tables de vos clients, la cabine du DJ et la caisse de l'établissement.
+      </p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      
+      <!-- CARTE 1: Mélangeur Diagnostique -->
+      <div class="bg-[#181226]/90 border border-white/10 rounded-[2.5rem] p-7 md:p-8 flex flex-col justify-between shadow-card-elevated backdrop-blur-xl relative overflow-hidden group hover:border-[#FF7A1A]/40 transition-colors">
+        <div>
+          <div class="flex items-center justify-between mb-6">
+            <span class="font-mono text-xs text-[#FF7A1A] font-semibold tracking-wider uppercase px-3 py-1 rounded-full bg-[#FF7A1A]/10 border border-[#FF7A1A]/20">
+              01. Cash Machine DJ
+            </span>
+            <span class="flex items-center gap-1.5 text-xs font-mono text-[#2BE38B]">
+              <span class="w-2 h-2 rounded-full bg-[#2BE38B] animate-ping"></span>
+              Live Ticker
+            </span>
+          </div>
+
+          <h3 class="font-display text-3xl text-white tracking-wide uppercase mb-2">
+            Monétisation Instantanée
+          </h3>
+          <p class="text-sm text-[#9E97AA] leading-relaxed mb-6">
+            Chaque son demandé passe de la gratuité à un flux de micro-revenus immédiats crédités sur votre compte.
+          </p>
+
+          <div id="mixer-container" class="relative h-60 w-full mb-6">
+            <!-- Dynamic Cards injected via script -->
+          </div>
+        </div>
+
+        <div class="pt-4 border-t border-white/10 flex items-center justify-between">
+          <span class="text-xs font-mono text-[#9E97AA]">Total encaissé ce soir :</span>
+          <span id="mixer-revenue" class="font-display text-xl text-[#FF7A1A] font-bold tracking-wider">
+            68 500 FCFA
+          </span>
+        </div>
+      </div>
+
+      <!-- CARTE 2: Machine à Écrire Télémétrie -->
+      <div class="bg-[#181226]/90 border border-white/10 rounded-[2.5rem] p-7 md:p-8 flex flex-col justify-between shadow-card-elevated backdrop-blur-xl relative overflow-hidden group hover:border-[#FF2E88]/40 transition-colors">
+        <div>
+          <div class="flex items-center justify-between mb-6">
+            <span class="font-mono text-xs text-[#FF2E88] font-semibold tracking-wider uppercase px-3 py-1 rounded-full bg-[#FF2E88]/10 border border-[#FF2E88]/20">
+              02. Écran Géant & Dédicaces
+            </span>
+            <span class="flex items-center gap-1.5 text-xs font-mono text-[#FF2E88]">
+              <span class="w-2 h-2 rounded-full bg-[#FF2E88] animate-pulse"></span>
+              Flux DJ Actif
+            </span>
+          </div>
+
+          <h3 class="font-display text-3xl text-white tracking-wide uppercase mb-2">
+            Télémétrie en Direct
+          </h3>
+          <p class="text-sm text-[#9E97AA] leading-relaxed mb-6">
+            Le client suit sa commande en temps réel pendant que sa dédicace s'affiche en grand sur les écrans du maquis.
+          </p>
+
+          <div class="rounded-[1.5rem] bg-[#0A0712] border border-white/15 p-4 font-mono text-xs leading-relaxed h-56 flex flex-col justify-between">
+            <div class="flex items-center justify-between pb-2 border-b border-white/10 text-[10px] text-[#9E97AA]">
+              <span class="flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-red-500/80"></span>
+                <span class="w-2 h-2 rounded-full bg-yellow-500/80"></span>
+                <span class="w-2 h-2 rounded-full bg-green-500/80"></span>
+                <span class="ml-1 text-white/60">terminal-jokebox.live</span>
+              </span>
+              <span class="text-[#FF2E88]">BPM: 132 • LIVE</span>
+            </div>
+
+            <div class="flex-1 py-3 text-[#2BE38B] overflow-hidden">
+              <div class="text-[#9E97AA] text-[11px] mb-2">[Console Maquis VIP connecté]</div>
+              <div class="text-white text-xs font-semibold">
+                <span id="telemetry-output"></span>
+                <span class="inline-block w-2 h-4 ml-1 bg-[#FF2E88] animate-pulse align-middle"></span>
+              </div>
+            </div>
+
+            <div class="pt-2 border-t border-white/10 flex items-center justify-between text-[11px] text-[#9E97AA]">
+              <span>Statut : Diffusion synchro</span>
+              <span class="text-[#FF7A1A] font-bold">4 titres en attente</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="pt-4 border-t border-white/10 flex items-center gap-2 text-xs text-[#9E97AA]">
+          <i data-lucide="flame" class="w-4 h-4 text-[#FF2E88] shrink-0"></i>
+          <span>Dédicaces lumineuses visibles jusqu'au bout de la salle</span>
+        </div>
+      </div>
+
+      <!-- CARTE 3: Planificateur Protocole Curseur -->
+      <div class="bg-[#181226]/90 border border-white/10 rounded-[2.5rem] p-7 md:p-8 flex flex-col justify-between shadow-card-elevated backdrop-blur-xl relative overflow-hidden group hover:border-[#2BE38B]/40 transition-colors">
+        <div>
+          <div class="flex items-center justify-between mb-6">
+            <span class="font-mono text-xs text-[#2BE38B] font-semibold tracking-wider uppercase px-3 py-1 rounded-full bg-[#2BE38B]/10 border border-[#2BE38B]/20">
+              03. Paiements 100% Locaux
+            </span>
+            <span class="flex items-center gap-1.5 text-xs font-mono text-[#2BE38B]">
+              <i data-lucide="shield-check" class="w-3.5 h-3.5"></i>
+              Automatisé
+            </span>
+          </div>
+
+          <h3 class="font-display text-3xl text-white tracking-wide uppercase mb-2">
+            Paiement Wave & Orange
+          </h3>
+          <p class="text-sm text-[#9E97AA] leading-relaxed mb-6">
+            Encaissement direct en 5 secondes sans friction. En cas de refus du DJ, le client est remboursé automatiquement à la seconde.
+          </p>
+
+          <div class="rounded-[1.5rem] bg-[#221A36] border border-white/15 p-4 relative h-56 flex flex-col justify-between">
+            <div class="flex justify-between items-center text-xs font-mono text-[#9E97AA] pb-2 border-b border-white/10">
+              <span>Planning des Soirées</span>
+              <span class="text-[#2BE38B] font-semibold">Taux acceptation: 98%</span>
+            </div>
+
+            <div class="grid grid-cols-7 gap-1.5 my-2 text-center" id="schedule-grid">
+              <!-- Grid items injected -->
+            </div>
+
+            <div id="wave-action-btn" class="py-2 px-3 rounded-xl border flex items-center justify-between text-xs transition-all duration-300 bg-[#181226] border-white/10 text-white">
+              <span class="font-semibold flex items-center gap-1.5">
+                <i data-lucide="zap" class="w-3.5 h-3.5 text-[#2BE38B]"></i>
+                <span>Reversement Wave Instantané</span>
+              </span>
+              <span class="font-mono text-[10px] bg-white/10 px-2 py-0.5 rounded-full" id="wave-status">
+                ✓ Validé 24/7
+              </span>
+            </div>
+
+            <div id="simulated-cursor" class="absolute pointer-events-none transition-all duration-700 ease-out z-40" style="top: 75px; left: 76%;">
+              <svg class="w-6 h-6 text-[#FF7A1A] drop-shadow-[0_0_8px_rgba(255,122,26,0.8)]" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M4 0l16 12-7 2-4 9-5-23z" />
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <div class="pt-4 border-t border-white/10 flex items-center justify-between text-xs text-[#9E97AA]">
+          <span>Remboursement instantané :</span>
+          <span class="text-[#2BE38B] font-mono font-bold">0% de perte client</span>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- MANIFESTO SECTION -->
+  <section id="manifesto-section" class="relative py-28 px-5 sm:px-10 md:px-16 lg:px-24 bg-[#08050E] overflow-hidden border-y border-white/10">
+    <div class="absolute inset-0 pointer-events-none opacity-10 mix-blend-luminosity">
+      <img src="https://images.unsplash.com/photo-1514525253161-7a46d19cd819?auto=format&fit=crop&w=1920&q=80" alt="Texture nuit" class="w-full h-full object-cover">
+    </div>
+
+    <div class="relative z-10 max-w-5xl mx-auto text-center md:text-left">
+      <div class="inline-flex items-center gap-2 font-mono text-xs uppercase text-[#FF2E88] tracking-widest font-semibold mb-6">
+        <i data-lucide="radio" class="w-3.5 h-3.5"></i>
+        <span>Le Manifeste de la Nuit Ivoirienne</span>
+      </div>
+
+      <p class="text-lg sm:text-xl md:text-2xl text-[#9E97AA] font-light max-w-3xl mb-8 leading-relaxed">
+        « La plupart des maquis, bars et clubs subissent des demandes incessantes de chansons qui dérangent le DJ, créent des frustrations entre clients et ne rapportent pas un seul franc à la caisse de l’établissement. »
+      </p>
+
+      <div class="font-dramatic italic text-3xl sm:text-5xl md:text-6xl lg:text-7xl leading-[1.1] text-white">
+        « Nous faisons de chaque seconde de fête une <span class="text-[#FF7A1A] underline decoration-[#FF7A1A]/40 underline-offset-8 font-normal">ferveur collective</span>, un spectacle sur écran géant et un <span class="text-transparent bg-clip-text bg-gradient-to-r from-[#FF2E88] to-[#2BE38B] font-normal">nouveau revenu garanti</span>. »
+      </div>
+
+      <div class="mt-12 flex flex-wrap items-center gap-6 pt-8 border-t border-white/10">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center font-display text-xl text-[#FF7A1A]">01</div>
+          <span class="text-sm font-medium text-white">Le client est valorisé</span>
+        </div>
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center font-display text-xl text-[#FF2E88]">02</div>
+          <span class="text-sm font-medium text-white">Le DJ reste maître du tempo</span>
+        </div>
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-full bg-white/10 flex items-center justify-center font-display text-xl text-[#2BE38B]">03</div>
+          <span class="text-sm font-medium text-white">La caisse encaisse chaque verre</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PROTOCOL SECTION (STICKY STACKING) -->
+  <section id="protocol-section" class="relative py-20 px-5 sm:px-10 md:px-16 lg:px-24 max-w-6xl mx-auto">
+    <div class="mb-14 text-center">
+      <div class="inline-flex items-center gap-2 font-mono text-xs uppercase text-[#2BE38B] tracking-widest font-semibold mb-3">
+        <i data-lucide="layers" class="w-3.5 h-3.5"></i>
+        <span>Protocole d'Exécution en 3 Étapes</span>
+      </div>
+      <h2 class="font-display text-4xl sm:text-5xl md:text-6xl text-white tracking-tight uppercase">
+        Comment Ça Fonctionne Sur le Terrain
+      </h2>
+      <p class="text-[#9E97AA] text-base md:text-lg max-w-xl mx-auto mt-2">
+        Zéro téléchargement d'application. Une expérience 100% web optimisée pour smartphone en pleine ambiance.
+      </p>
+    </div>
+
+    <div class="relative space-y-12">
+      <!-- STEP 1 -->
+      <div class="protocol-card bg-[#181226] border border-white/15 rounded-[3rem] p-8 md:p-14 shadow-card-elevated backdrop-blur-2xl flex flex-col md:flex-row items-center gap-10 min-h-[500px]">
+        <div class="flex-1 space-y-5">
+          <div class="font-mono text-sm text-[#FF7A1A] font-bold tracking-widest uppercase flex items-center gap-2">
+            <span class="w-3 h-3 rounded-full bg-[#FF7A1A]"></span>
+            ÉTAPE 01 / SCAN IMMÉDIAT DU QR CODE
+          </div>
+          <h3 class="font-display text-4xl sm:text-5xl text-white tracking-wide uppercase">
+            Le client flashe le QR code sur sa table
+          </h3>
+          <p class="text-[#9E97AA] text-base sm:text-lg leading-relaxed font-light">
+            Chaque table dispose d'un chevalet lumineux ou sticker résistant aux verres. Le client ouvre l'appareil photo de son téléphone et le catalogue musical validé par le DJ s'affiche immédiatement.
+          </p>
+          <div class="pt-4 flex flex-wrap gap-3 font-mono text-xs text-white">
+            <span class="px-3.5 py-1.5 rounded-full bg-white/5 border border-white/10">Sans téléchargement</span>
+            <span class="px-3.5 py-1.5 rounded-full bg-white/5 border border-white/10">Ouverture &lt; 1 seconde</span>
+            <span class="px-3.5 py-1.5 rounded-full bg-white/5 border border-white/10">Catalogue synchronisé</span>
+          </div>
+        </div>
+
+        <div class="w-64 h-64 sm:w-80 sm:h-80 relative flex items-center justify-center shrink-0">
+          <svg class="w-full h-full rotating-vinyl drop-shadow-[0_0_30px_rgba(255,122,26,0.3)]" viewBox="0 0 200 200">
+            <circle cx="100" cy="100" r="95" fill="#0D0A14" stroke="#FF7A1A" stroke-width="2" />
+            <circle cx="100" cy="100" r="80" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="1" stroke-dasharray="4 4" />
+            <circle cx="100" cy="100" r="65" fill="none" stroke="rgba(255,122,26,0.2)" stroke-width="1" />
+            <circle cx="100" cy="100" r="35" fill="#181226" stroke="#FF2E88" stroke-width="2" />
+            <circle cx="100" cy="100" r="8" fill="#FF7A1A" />
+            <path d="M100 20 A80 80 0 0 1 180 100" fill="none" stroke="#FF7A1A" stroke-width="3" stroke-linecap="round" opacity="0.6" />
+          </svg>
+          <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+            <div class="w-16 h-16 rounded-2xl bg-black/80 border border-[#FF7A1A] flex items-center justify-center shadow-[0_0_20px_rgba(255,122,26,0.5)]">
+              <i data-lucide="qr-code" class="w-8 h-8 text-[#FF7A1A]"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 2 -->
+      <div class="protocol-card bg-[#181226] border border-white/15 rounded-[3rem] p-8 md:p-14 shadow-card-elevated backdrop-blur-2xl flex flex-col md:flex-row items-center gap-10 min-h-[500px]">
+        <div class="flex-1 space-y-5">
+          <div class="font-mono text-sm text-[#FF2E88] font-bold tracking-widest uppercase flex items-center gap-2">
+            <span class="w-3 h-3 rounded-full bg-[#FF2E88]"></span>
+            ÉTAPE 02 / DÉDICACE & PAIEMENT SANS FRICTION
+          </div>
+          <h3 class="font-display text-4xl sm:text-5xl text-white tracking-wide uppercase">
+            Choix du son, dédicace et règlement en 5 secondes
+          </h3>
+          <p class="text-[#9E97AA] text-base sm:text-lg leading-relaxed font-light">
+            Le client tape le titre ou l’artiste, ajoute sa dédicace (« Pour le boss de la table VIP ! ») et valide avec Wave, Orange Money ou MTN. Remboursement automatique immédiat en cas de refus du DJ.
+          </p>
+          <div class="pt-4 flex flex-wrap gap-3 font-mono text-xs text-white">
+            <span class="px-3.5 py-1.5 rounded-full bg-white/5 border border-white/10">Wave 1-Clic</span>
+            <span class="px-3.5 py-1.5 rounded-full bg-white/5 border border-white/10">Orange Money OTP</span>
+            <span class="px-3.5 py-1.5 rounded-full bg-white/5 border border-white/10">Sécurité bancaire</span>
+          </div>
+        </div>
+
+        <div class="w-64 h-64 sm:w-80 sm:h-80 relative flex items-center justify-center shrink-0 rounded-3xl bg-[#0B0813] border border-white/10 p-5 overflow-hidden">
+          <div class="grid grid-cols-6 gap-3 w-full h-full p-4 place-items-center">
+            <!-- 36 points -->
+            <script>
+              document.write(Array(36).fill(0).map(() => '<div class="w-2.5 h-2.5 rounded-full bg-white/15"></div>').join(''));
+            </script>
+          </div>
+          <div class="scanning-laser absolute top-2 left-0 right-0 h-1 bg-gradient-to-r from-transparent via-[#FF2E88] to-transparent shadow-[0_0_15px_#FF2E88]"></div>
+          <div class="absolute inset-x-8 inset-y-6 rounded-2xl border border-[#FF2E88]/40 bg-black/70 backdrop-blur-sm flex flex-col justify-between p-3.5 font-mono text-[10px]">
+            <div class="flex justify-between text-[#FF2E88]">
+              <span>CONFIRMATION WAVE</span>
+              <span>2 000 F</span>
+            </div>
+            <div class="text-center py-2 text-white font-bold text-xs">
+              Dédicace : "Joyeux Anniv Aïcha"
+            </div>
+            <div class="bg-[#FF2E88] text-black text-center py-1.5 rounded-lg font-bold">
+              ✓ Validé sur mobile
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- STEP 3 -->
+      <div class="protocol-card bg-[#181226] border border-white/15 rounded-[3rem] p-8 md:p-14 shadow-card-elevated backdrop-blur-2xl flex flex-col md:flex-row items-center gap-10 min-h-[500px]">
+        <div class="flex-1 space-y-5">
+          <div class="font-mono text-sm text-[#2BE38B] font-bold tracking-widest uppercase flex items-center gap-2">
+            <span class="w-3 h-3 rounded-full bg-[#2BE38B]"></span>
+            ÉTAPE 03 / DIFFUSION LIVE & ÉCRAN GÉANT
+          </div>
+          <h3 class="font-display text-4xl sm:text-5xl text-white tracking-wide uppercase">
+            « Ta chanson passe dans 3 titres » & l'ambiance explose
+          </h3>
+          <p class="text-[#9E97AA] text-base sm:text-lg leading-relaxed font-light">
+            Le client reçoit une alerte en temps réel. Dès que le DJ lance le morceau, la dédicace s'affiche en grand avec des animations lumineuses sur les télévisions et projecteurs du maquis.
+          </p>
+          <div class="pt-4 flex flex-wrap gap-3 font-mono text-xs text-white">
+            <span class="px-3.5 py-1.5 rounded-full bg-white/5 border border-white/10">Affichage Grand Écran</span>
+            <span class="px-3.5 py-1.5 rounded-full bg-white/5 border border-white/10">Suivi minute par minute</span>
+            <span class="px-3.5 py-1.5 rounded-full bg-white/5 border border-white/10">Clients captivés</span>
+          </div>
+        </div>
+
+        <div class="w-64 h-64 sm:w-80 sm:h-80 relative flex items-center justify-center shrink-0 rounded-3xl bg-[#0B0813] border border-white/10 p-5 overflow-hidden">
+          <svg class="w-full h-full drop-shadow-[0_0_20px_rgba(43,227,139,0.5)]" viewBox="0 0 300 200">
+            <line x1="0" y1="100" x2="300" y2="100" stroke="rgba(255,255,255,0.1)" stroke-width="1" />
+            <path class="ecg-path" d="M0 100 L40 100 L55 60 L70 140 L85 90 L100 110 L115 40 L130 160 L145 70 L160 120 L180 100 L210 100 L225 50 L240 150 L255 100 L300 100" fill="none" stroke="#2BE38B" stroke-width="3.5" stroke-linecap="round" stroke-dasharray="200" stroke-dashoffset="0" />
+          </svg>
+          <div class="absolute bottom-4 left-4 right-4 bg-black/80 rounded-xl p-2.5 border border-[#2BE38B]/40 flex items-center justify-between text-xs font-mono">
+            <span class="text-white flex items-center gap-1.5">
+              <i data-lucide="volume-2" class="w-3.5 h-3.5 text-[#2BE38B] animate-bounce"></i>
+              "Premier Gaou"
+            </span>
+            <span class="text-[#2BE38B] font-bold">EN COURS 02:41</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PRICING SECTION -->
+  <section id="pricing-section" class="py-24 px-5 sm:px-10 md:px-16 lg:px-24 max-w-7xl mx-auto">
+    <div class="text-center mb-16">
+      <div class="inline-flex items-center gap-2 font-mono text-xs uppercase text-[#FF7A1A] tracking-widest font-semibold mb-3">
+        <i data-lucide="award" class="w-3.5 h-3.5"></i>
+        <span>Modèle Économique Transparent</span>
+      </div>
+      <h2 class="font-display text-4xl sm:text-5xl md:text-6xl text-white tracking-tight uppercase">
+        Des Formules Adaptées à Chaque Établissement
+      </h2>
+      <p class="text-[#9E97AA] text-base md:text-lg max-w-xl mx-auto mt-2">
+        Commencez sans aucun frais fixe ou activez la suite complète pour vos écrans géants et VIP.
+      </p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 items-stretch">
+      <!-- Plan 1 -->
+      <div class="bg-[#181226]/80 border border-white/10 rounded-[2.5rem] p-8 flex flex-col justify-between shadow-card-elevated backdrop-blur-xl relative">
+        <div>
+          <div class="font-mono text-xs text-[#9E97AA] uppercase tracking-wider mb-2 font-semibold">Formule Démarrage</div>
+          <h3 class="font-display text-3xl text-white uppercase tracking-wide mb-1">Maquis & Bar</h3>
+          <p class="text-sm text-[#9E97AA] mb-6">Idéal pour les maquis ouverts, terrasses et bars de quartier.</p>
+          <div class="mb-6 pb-6 border-b border-white/10">
+            <div class="flex items-baseline gap-1">
+              <span class="font-display text-5xl text-white font-bold">0 FCFA</span>
+              <span class="text-xs font-mono text-[#9E97AA]">/ mois</span>
+            </div>
+            <div class="text-xs text-[#FF7A1A] font-mono mt-1">15% de commission sur les dédicaces</div>
+          </div>
+          <ul class="space-y-3.5 text-sm text-[#F5F1E8]/85 mb-8">
+            <li class="flex items-center gap-3"><i data-lucide="check-circle-2" class="w-4 h-4 text-[#2BE38B]"></i><span>20 QR codes imperméables livrés à Abidjan</span></li>
+            <li class="flex items-center gap-3"><i data-lucide="check-circle-2" class="w-4 h-4 text-[#2BE38B]"></i><span>Interface web smartphone pour le DJ</span></li>
+            <li class="flex items-center gap-3"><i data-lucide="check-circle-2" class="w-4 h-4 text-[#2BE38B]"></i><span>Paiements Wave & Orange Money</span></li>
+            <li class="flex items-center gap-3"><i data-lucide="check-circle-2" class="w-4 h-4 text-[#2BE38B]"></i><span>Reversements hebdomadaires automatiques</span></li>
+          </ul>
+        </div>
+        <button onclick="openDemoModal()" class="btn-magnetic w-full py-4 text-sm font-bold text-white bg-white/10 border border-white/20 hover:border-white">
+          <span class="btn-slide-bg bg-white/20"></span>
+          <span class="btn-content">Installer dans mon maquis</span>
+        </button>
+      </div>
+
+      <!-- Plan 2: Featured -->
+      <div class="bg-gradient-to-b from-[#221A36] to-[#181226] border-2 border-[#FF7A1A] rounded-[2.5rem] p-8 md:p-10 flex flex-col justify-between shadow-[0_0_50px_rgba(255,122,26,0.35)] backdrop-blur-2xl relative lg:-translate-y-3 z-20">
+        <div class="absolute -top-4 left-1/2 -translate-x-1/2 bg-[#FF7A1A] text-black font-display tracking-wider text-xs px-4 py-1 rounded-full uppercase font-bold shadow-[0_0_15px_#FF7A1A]">
+          Recommandé • Le Plus Populaire
+        </div>
+        <div>
+          <div class="font-mono text-xs text-[#FF7A1A] uppercase tracking-wider mb-2 font-bold">Performance Complète</div>
+          <h3 class="font-display text-4xl text-white uppercase tracking-wide mb-1">Club & Lounge Chic</h3>
+          <p class="text-sm text-[#F5F1E8]/70 mb-6">Pour les clubs, rooftops et lounges qui veulent maximiser chaque table VIP.</p>
+          <div class="mb-6 pb-6 border-b border-white/10">
+            <div class="flex items-baseline gap-1">
+              <span class="font-display text-5xl text-white font-bold">25 000 FCFA</span>
+              <span class="text-xs font-mono text-[#9E97AA]">/ mois</span>
+            </div>
+            <div class="text-xs text-[#2BE38B] font-mono mt-1">Seulement 10% de commission par titre</div>
+          </div>
+          <ul class="space-y-3.5 text-sm text-[#F5F1E8] mb-8 font-medium">
+            <li class="flex items-center gap-3"><i data-lucide="check-circle-2" class="w-4 h-4 text-[#FF7A1A]"></i><span>50 QR codes haut de gamme en plexiglas néon</span></li>
+            <li class="flex items-center gap-3"><i data-lucide="check-circle-2" class="w-4 h-4 text-[#FF7A1A]"></i><span>Affichage dynamique sur Téléviseurs & Vidéoprojecteurs</span></li>
+            <li class="flex items-center gap-3"><i data-lucide="check-circle-2" class="w-4 h-4 text-[#FF7A1A]"></i><span>Tableau de bord DJ pro sur tablette avec BPM</span></li>
+            <li class="flex items-center gap-3"><i data-lucide="check-circle-2" class="w-4 h-4 text-[#FF7A1A]"></i><span>Boosts VIP et enchères de morceaux en direct</span></li>
+            <li class="flex items-center gap-3"><i data-lucide="check-circle-2" class="w-4 h-4 text-[#2BE38B]"></i><span>Reversements instantanés 24h/24 par Wave direct</span></li>
+          </ul>
+        </div>
+        <button onclick="openDemoModal()" class="btn-magnetic w-full py-4 text-base font-bold text-black bg-[#FF7A1A] shadow-[0_0_25px_rgba(255,122,26,0.6)]">
+          <span class="btn-slide-bg bg-white"></span>
+          <span class="btn-content flex items-center justify-center gap-2">
+            <span>Démarrer l'essai 14 jours</span>
+            <i data-lucide="arrow-right" class="w-4 h-4"></i>
+          </span>
+        </button>
+      </div>
+
+      <!-- Plan 3 -->
+      <div class="bg-[#181226]/80 border border-white/10 rounded-[2.5rem] p-8 flex flex-col justify-between shadow-card-elevated backdrop-blur-xl relative">
+        <div>
+          <div class="font-mono text-xs text-[#9E97AA] uppercase tracking-wider mb-2 font-semibold">Multi-Établissements</div>
+          <h3 class="font-display text-3xl text-white uppercase tracking-wide mb-1">Réseau & Franchise</h3>
+          <p class="text-sm text-[#9E97AA] mb-6">Pour les complexes hôteliers, franchises ou festivals.</p>
+          <div class="mb-6 pb-6 border-b border-white/10">
+            <div class="flex items-baseline gap-1">
+              <span class="font-display text-5xl text-white font-bold">Sur Devis</span>
+            </div>
+            <div class="text-xs text-[#FF2E88] font-mono mt-1">Commission dégressive sur volume</div>
+          </div>
+          <ul class="space-y-3.5 text-sm text-[#F5F1E8]/85 mb-8">
+            <li class="flex items-center gap-3"><i data-lucide="check-circle-2" class="w-4 h-4 text-[#FF2E88]"></i><span>Gestion multi-locaux centralisée sur un compte</span></li>
+            <li class="flex items-center gap-3"><i data-lucide="check-circle-2" class="w-4 h-4 text-[#FF2E88]"></i><span>Intégration sur mesure DMX & régie vidéo</span></li>
+            <li class="flex items-center gap-3"><i data-lucide="check-circle-2" class="w-4 h-4 text-[#FF2E88]"></i><span>Branding personnalisé au nom du club</span></li>
+            <li class="flex items-center gap-3"><i data-lucide="check-circle-2" class="w-4 h-4 text-[#FF2E88]"></i><span>Account Manager dédié à Abidjan 24h/24</span></li>
+          </ul>
+        </div>
+        <button onclick="openDemoModal()" class="btn-magnetic w-full py-4 text-sm font-bold text-white bg-white/10 border border-white/20 hover:border-white">
+          <span class="btn-slide-bg bg-white/20"></span>
+          <span class="btn-content">Contacter l'équipe VIP</span>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="relative bg-[#08050E] rounded-t-[4rem] border-t border-white/10 pt-16 pb-12 px-5 sm:px-10 md:px-16 lg:px-24">
+    <div class="max-w-7xl mx-auto">
+      <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 pb-12 border-b border-white/10">
+        <div>
+          <div class="flex items-center gap-2 mb-2">
+            <span class="font-display text-4xl tracking-wider text-white">JOKEBOX</span>
+            <span class="w-2.5 h-2.5 rounded-full bg-[#2BE38B]"></span>
+          </div>
+          <p class="text-sm text-[#9E97AA] max-w-md">
+            Le Jukebox Digital de la Nuit Abidjanaise — De Yopougon à Marcory, transformez l'ambiance en opportunité.
+          </p>
+        </div>
+
+        <div class="inline-flex items-center gap-3 px-4 py-2.5 rounded-full bg-[#181226] border border-white/10 font-mono text-xs">
+          <span class="relative flex h-2.5 w-2.5">
+            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#2BE38B] opacity-75"></span>
+            <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#2BE38B]"></span>
+          </span>
+          <span class="text-white font-medium">SYSTÈME OPÉRATIONNEL</span>
+          <span class="text-[#9E97AA] hidden sm:inline">• Latence Wave : 42ms</span>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-8 py-12 text-sm">
+        <div>
+          <h4 class="font-mono text-xs uppercase tracking-wider text-white font-bold mb-4">Produit</h4>
+          <ul class="space-y-2.5 text-[#9E97AA]">
+            <li><a href="#features-section" class="hover:text-[#FF7A1A] transition-colors">Fonctionnalités</a></li>
+            <li><a href="#protocol-section" class="hover:text-[#FF7A1A] transition-colors">Application DJ</a></li>
+            <li><a href="#manifesto-section" class="hover:text-[#FF7A1A] transition-colors">Écrans Géants</a></li>
+            <li><a href="#pricing-section" class="hover:text-[#FF7A1A] transition-colors">Tarifs & Modèle</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <h4 class="font-mono text-xs uppercase tracking-wider text-white font-bold mb-4">Paiements</h4>
+          <ul class="space-y-2.5 text-[#9E97AA]">
+            <li class="flex items-center gap-1.5"><span class="text-[#2BE38B]">●</span> Wave Côte d'Ivoire</li>
+            <li class="flex items-center gap-1.5"><span class="text-[#FF7A1A]">●</span> Orange Money CI</li>
+            <li class="flex items-center gap-1.5"><span class="text-yellow-400">●</span> MTN MoMo</li>
+            <li class="flex items-center gap-1.5"><span class="text-blue-400">●</span> Moov Money Flooz</li>
+          </ul>
+        </div>
+
+        <div>
+          <h4 class="font-mono text-xs uppercase tracking-wider text-white font-bold mb-4">Établissements</h4>
+          <ul class="space-y-2.5 text-[#9E97AA]">
+            <li><a href="#" class="hover:text-[#FF2E88] transition-colors">Maquis & Bars</a></li>
+            <li><a href="#" class="hover:text-[#FF2E88] transition-colors">Clubs & Discothèques</a></li>
+            <li><a href="#" class="hover:text-[#FF2E88] transition-colors">Lounges & Rooftops</a></li>
+            <li><a href="#" class="hover:text-[#FF2E88] transition-colors">Événements & Festivals</a></li>
+          </ul>
+        </div>
+
+        <div>
+          <h4 class="font-mono text-xs uppercase tracking-wider text-white font-bold mb-4">Contact & Support</h4>
+          <ul class="space-y-2.5 text-[#9E97AA]">
+            <li>Abidjan, Côte d'Ivoire</li>
+            <li class="text-white font-mono font-medium">+225 07 00 00 00 00</li>
+            <li>contact@jokebox.ci</li>
+            <li class="text-[#2BE38B] font-medium">Assistance WhatsApp 24/7</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="pt-8 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between text-xs text-[#9E97AA] gap-4">
+        <div>© 2026 JOKEBOX CI. Conçu pour la culture nocturne ivoirienne.</div>
+        <div class="flex gap-6">
+          <a href="#" class="hover:text-white transition-colors">Confidentialité</a>
+          <a href="#" class="hover:text-white transition-colors">Conditions Générales</a>
+          <a href="#" class="hover:text-white transition-colors">Charte DJ</a>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- MODAL DEMO SIMULATOR -->
+  <div id="demo-modal" class="fixed inset-0 z-[100] hidden items-center justify-center p-4 bg-black/80 backdrop-blur-xl">
+    <div class="relative w-full max-w-md bg-[#181226] border border-[#FF7A1A]/40 rounded-[2.5rem] p-6 shadow-[0_0_50px_rgba(255,122,26,0.4)] text-[#F5F1E8]">
+      <button onclick="closeDemoModal()" class="absolute top-5 right-5 w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white hover:bg-white/20 transition-colors">
+        ✕
+      </button>
+
+      <div class="text-center mb-5">
+        <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FF7A1A]/10 border border-[#FF7A1A]/30 text-[#FF7A1A] font-mono text-[11px] font-bold mb-2">
+          <i data-lucide="smartphone" class="w-3.5 h-3.5"></i>
+          <span>Simulateur Client Smartphone</span>
+        </div>
+        <h3 class="font-display text-2xl text-white">Scanner & Commander</h3>
+        <p class="text-xs text-[#9E97AA]">Maquis Le Prince • Table 12</p>
+      </div>
+
+      <div class="rounded-2xl bg-[#0E0A17] border border-white/10 p-4 space-y-3.5 font-sans">
+        <div class="space-y-1">
+          <label class="text-[11px] font-mono text-[#9E97AA]">Rechercher un son :</label>
+          <div class="flex items-center gap-2 bg-[#181226] border border-white/15 rounded-xl px-3 py-2 text-sm text-white">
+            <i data-lucide="music" class="w-4 h-4 text-[#FF7A1A]"></i>
+            <span>Kerozen - Motivation</span>
+          </div>
+        </div>
+
+        <div class="space-y-1">
+          <label class="text-[11px] font-mono text-[#9E97AA]">Dédicace (optionnelle) :</label>
+          <div class="bg-[#181226] border border-white/15 rounded-xl px-3 py-2 text-xs text-white">
+            "Grosse force à toute la team ! On est ensemble jusqu'au matin 🍾"
+          </div>
+        </div>
+
+        <div class="flex items-center justify-between p-3 rounded-xl bg-[#FF2E88]/10 border border-[#FF2E88]/30">
+          <div class="text-xs">
+            <div class="font-bold text-white">Option Boost VIP</div>
+            <div class="text-[10px] text-[#9E97AA]">Passe devant 3 morceaux</div>
+          </div>
+          <div class="font-display text-lg text-[#FF2E88]">+1 500 F</div>
+        </div>
+
+        <div class="pt-2 border-t border-white/10 flex justify-between items-center text-xs">
+          <span class="font-mono text-[#9E97AA]">Total à régler :</span>
+          <span class="font-display text-2xl text-[#FF7A1A] font-bold">3 500 FCFA</span>
+        </div>
+
+        <div class="grid grid-cols-2 gap-2 pt-1">
+          <button onclick="confirmPayment('Wave')" class="py-2.5 px-3 rounded-xl bg-[#1EA7FD] hover:brightness-110 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-md">
+            <span>Payer par Wave</span>
+          </button>
+          <button onclick="confirmPayment('Orange Money')" class="py-2.5 px-3 rounded-xl bg-[#FF6600] hover:brightness-110 text-white font-bold text-xs flex items-center justify-center gap-1.5 shadow-md">
+            <span>Orange Money</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="mt-4 text-center">
+        <span class="font-mono text-[10px] text-[#9E97AA]">
+          🔒 Transaction sécurisée • Remboursement garanti si rejet DJ
+        </span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Initialize Lucide icons
+    lucide.createIcons();
+
+    // Modal controls
+    function openDemoModal() {
+      const modal = document.getElementById('demo-modal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+    function closeDemoModal() {
+      const modal = document.getElementById('demo-modal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+    function confirmPayment(method) {
+      alert(`Simulation ${method} : Paiement de 3 500 FCFA validé ! La dédicace a été transmise au DJ.`);
+      closeDemoModal();
+    }
+
+    // Mixer Cards Dynamic Cycling
+    const mixerData = [
+      { id: 1, title: "Kerozen — Allez les Éléphants", type: "Demande Standard", amount: "+2 000 FCFA", method: "Wave", table: "Table 7 • Maquis Duval", tagColor: "text-[#FF7A1A] border-[#FF7A1A]/40 bg-[#FF7A1A]/10", border: "border-[#FF7A1A]/30" },
+      { id: 2, title: "Didi B — Tala (VIP Boost x3)", type: "Boost Prioritaire", amount: "+6 500 FCFA", method: "Orange Money", table: "VIP Salon 2 • Club Havana", tagColor: "text-[#FF2E88] border-[#FF2E88]/40 bg-[#FF2E88]/10", border: "border-[#FF2E88]/30" },
+      { id: 3, title: "Josey — Zambéléman (Dédicace)", type: "Dédicace Anniversaire", amount: "+3 500 FCFA", method: "MTN Money", table: "Bar Central • Le Charly", tagColor: "text-[#2BE38B] border-[#2BE38B]/40 bg-[#2BE38B]/10", border: "border-[#2BE38B]/30" }
+    ];
+
+    let currentMixer = [...mixerData];
+    let totalRev = 68500;
+    const mixerContainer = document.getElementById('mixer-container');
+    const revenueEl = document.getElementById('mixer-revenue');
+
+    function renderMixer() {
+      if (!mixerContainer) return;
+      const positions = [
+        { top: "0px", scale: 1, zIndex: 30, opacity: 1 },
+        { top: "18px", scale: 0.94, zIndex: 20, opacity: 0.8 },
+        { top: "36px", scale: 0.88, zIndex: 10, opacity: 0.6 }
+      ];
+
+      mixerContainer.innerHTML = currentMixer.map((card, idx) => {
+        const p = positions[idx] || positions[2];
+        return `
+          <div style="top: ${p.top}; transform: scale(${p.scale}); z-index: ${p.zIndex}; opacity: ${p.opacity}; transition: all 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);"
+               class="absolute left-0 right-0 p-4 rounded-[1.5rem] bg-[#221A36] border ${card.border}">
+            <div class="flex items-center justify-between mb-1.5">
+              <span class="text-[10px] font-mono px-2 py-0.5 rounded-full border ${card.tagColor}">${card.type}</span>
+              <span class="font-display text-lg text-white font-bold">${card.amount}</span>
+            </div>
+            <div class="font-medium text-white text-sm truncate mb-1">${card.title}</div>
+            <div class="flex items-center justify-between text-[11px] text-[#9E97AA] font-mono">
+              <span>${card.table}</span>
+              <span class="text-[#2BE38B] font-semibold">✓ ${card.method}</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    renderMixer();
+    setInterval(() => {
+      const last = currentMixer.pop();
+      currentMixer.unshift(last);
+      totalRev += 2000;
+      if (revenueEl) revenueEl.innerText = totalRev.toLocaleString('fr-FR') + ' FCFA';
+      renderMixer();
+    }, 3200);
+
+    // Telemetry Typewriter
+    const logs = [
+      "[23:14:02] FLASH QR CODE Table #4 -> Session ouverte",
+      "[23:14:15] TITRE SÉLECTIONNÉ : Magic System - 1er Gaou",
+      "[23:14:21] DÉDICACE : 'Joyeux anniversaire Aïcha, on fête ça fort ! 🥂'",
+      "[23:14:28] PAIEMENT WAVE REÇU : 2 500 FCFA (Réf #WV-8891)",
+      "[23:14:31] DJ CONFIRMATION : Accepté avec Boost DJ",
+      "[23:14:35] FILE D'ATTENTE : 'Ta chanson passe dans 2 titres'",
+      "[23:14:40] ÉCRAN GÉANT : Projection lumineuse lancée !"
+    ];
+    let lIdx = 0, cIdx = 0;
+    const outputEl = document.getElementById('telemetry-output');
+
+    function typeWriter() {
+      const line = logs[lIdx];
+      if (cIdx < line.length) {
+        outputEl.innerText += line[cIdx];
+        cIdx++;
+        setTimeout(typeWriter, 35);
+      } else {
+        setTimeout(() => {
+          outputEl.innerText = "";
+          cIdx = 0;
+          lIdx = (lIdx + 1) % logs.length;
+          typeWriter();
+        }, 2000);
+      }
+    }
+    typeWriter();
+
+    // Schedule grid setup
+    const days = [
+      { d: "L", rev: "18k" }, { d: "M", rev: "24k" }, { d: "M", rev: "38k" },
+      { d: "J", rev: "45k" }, { d: "V", rev: "112k" }, { d: "S", rev: "165k" }, { d: "D", rev: "55k" }
+    ];
+    const gridEl = document.getElementById('schedule-grid');
+    if (gridEl) {
+      gridEl.innerHTML = days.map((it, i) => `
+        <div id="day-cell-${i}" class="flex flex-col items-center justify-center py-2 rounded-xl bg-[#181226] text-[#9E97AA] transition-all duration-300">
+          <span class="font-display text-sm font-bold">${it.d}</span>
+          <span class="font-mono text-[9px] mt-0.5">${it.rev}</span>
+        </div>
+      `).join('');
+    }
+
+    // Cursor movement cycle
+    let cStep = 0;
+    const cursor = document.getElementById('simulated-cursor');
+    const waveBtn = document.getElementById('wave-action-btn');
+
+    setInterval(() => {
+      cStep = (cStep + 1) % 5;
+      const samCell = document.getElementById('day-cell-5');
+      if (cStep === 1 || cStep === 2) {
+        samCell?.classList.add('bg-gradient-to-b', 'from-[#FF7A1A]', 'to-[#FF2E88]', 'text-white', 'scale-105', 'shadow-[0_0_15px_rgba(255,122,26,0.5)]');
+        samCell?.classList.remove('bg-[#181226]', 'text-[#9E97AA]');
+      } else {
+        samCell?.classList.remove('bg-gradient-to-b', 'from-[#FF7A1A]', 'to-[#FF2E88]', 'text-white', 'scale-105', 'shadow-[0_0_15px_rgba(255,122,26,0.5)]');
+        samCell?.classList.add('bg-[#181226]', 'text-[#9E97AA]');
+      }
+
+      if (cStep >= 3) {
+        waveBtn?.classList.add('bg-[#2BE38B]/20', 'border-[#2BE38B]', 'text-[#2BE38B]');
+        waveBtn?.classList.remove('bg-[#181226]', 'border-white/10', 'text-white');
+      } else {
+        waveBtn?.classList.remove('bg-[#2BE38B]/20', 'border-[#2BE38B]', 'text-[#2BE38B]');
+        waveBtn?.classList.add('bg-[#181226]', 'border-white/10', 'text-white');
+      }
+
+      if (cursor) {
+        if (cStep <= 1) {
+          cursor.style.top = "75px";
+          cursor.style.left = "76%";
+          cursor.style.transform = "scale(1)";
+        } else if (cStep === 2) {
+          cursor.style.top = "80px";
+          cursor.style.left = "76%";
+          cursor.style.transform = "scale(0.85)";
+        } else {
+          cursor.style.top = "165px";
+          cursor.style.left = "50%";
+          cursor.style.transform = "scale(1)";
+        }
+      }
+    }, 1800);
+
+    // Navbar scroll listener
+    window.addEventListener('scroll', () => {
+      const nav = document.getElementById('navbar');
+      if (window.scrollY > 80) {
+        nav.classList.add('bg-[#0F0B1A]/85', 'backdrop-blur-2xl', 'shadow-[0_15px_40px_rgba(0,0,0,0.7)]');
+        nav.classList.remove('bg-white/5');
+      } else {
+        nav.classList.remove('bg-[#0F0B1A]/85', 'backdrop-blur-2xl', 'shadow-[0_15px_40px_rgba(0,0,0,0.7)]');
+        nav.classList.add('bg-white/5');
+      }
+    });
+
+    // GSAP Animations
+    document.addEventListener("DOMContentLoaded", () => {
+      gsap.from(".hero-anim", {
+        y: 40,
+        opacity: 0,
+        duration: 1.1,
+        ease: "power3.out",
+        stagger: 0.08
+      });
+
+      gsap.to(".rotating-vinyl", {
+        rotation: 360,
+        repeat: -1,
+        duration: 14,
+        ease: "none"
+      });
+
+      gsap.to(".scanning-laser", {
+        y: 180,
+        repeat: -1,
+        yoyo: true,
+        duration: 2.5,
+        ease: "power1.inOut"
+      });
+
+      gsap.to(".ecg-path", {
+        strokeDashoffset: -400,
+        repeat: -1,
+        duration: 2.8,
+        ease: "linear"
+      });
+    });
+  </script>
+</body>
+</html>
